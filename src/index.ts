@@ -2,7 +2,6 @@ import * as core from '@actions/core'
 import {getOctokit, context} from '@actions/github'
 import fs from 'fs'
 import propertiesReader, {Value} from 'properties-reader'
-import {simpleGit} from 'simple-git'
 
 type Inputs = {
   propertiesPath: string
@@ -52,14 +51,6 @@ async function run(): Promise<void> {
   const tagName = `${tagPrefix}${versionName}${tagSuffix}`
   core.info(`Setting tag name to ${tagName}`)
 
-  const git = simpleGit()
-  const tags = await git.tags()
-
-  if (tags.all.includes(tagName)) {
-    core.warning(`"${tagName}" tag already exists.`)
-    return
-  }
-
   const octokit = getOctokit(githubToken)
 
   core.info(`Creating release for ${tagName}`)
@@ -74,7 +65,8 @@ async function run(): Promise<void> {
       target_commitish: context.sha
     })
   } catch (error) {
-    throw Error(`Failed to create release: ${error}`)
+    core.warning(`"${tagName}" tag already exists.`)
+    return
   }
 }
 
